@@ -1,0 +1,1 @@
+Bash script for Debian, normally i use it for servers
