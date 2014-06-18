@@ -16,8 +16,12 @@
 #    on linux OS, invokes some system commands like
 #    sudo, pacman, apt-get install, etc
 #
+#----------------------------------------------------------------------
 # NOTES:    
-#	 I prefer LibreOffice but if you want use wps on spanish this bash script can help you
+#----------------------------------------------------------------------
+#	 I prefer LibreOffice but if you want use wps on spanish this bash 
+#    script can help you
+
 #    Test on Archlinux,ubuntu 13.10 and Xubuntu 14.04
 #----------------------------------------------------------------------
 
