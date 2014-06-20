@@ -550,6 +550,8 @@ install()
 
 	case "$1" in
   	'Arch') # Apply each step for arch linux
+
+		#test on GNU bash, versión 4.3.18(1)-release (x86_64-unknown-linux-gnu)
 		
     	#command pacman-g2 -Ss "$2" | awk '$3!="[Installed:"'
     	#https://www.archlinux.org/packages/extra/x86_64/qt5-tools/
