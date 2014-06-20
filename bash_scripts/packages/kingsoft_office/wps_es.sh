@@ -135,27 +135,6 @@ fi
 
 #wget https://codeload.github.com/wps-community/wps_i18n/zip/master
 
-
-
-#   if [[ -x "/usr/bin/pacman" ]]; then
-#     # This is to prevent a loop when this script is installed on
-#     # non-standard system
-#     grep -q "$FUNCNAME" '/usr/bin/pacman' >/dev/null 2>&1
-#     [[ $? -ge 1 ]] && _OSTYPE="PACMAN" && return
-#   fi
-#   [[ -x "/usr/bin/apt-get" ]]          && _OSTYPE="DPKG" && return
-#   [[ -x "/usr/bin/yum" ]]              && _OSTYPE="YUM" && return
-#   [[ -x "/opt/local/bin/port" ]]       && _OSTYPE="MACPORTS" && return
-#   command -v brew >/dev/null           && _OSTYPE="HOMEBREW" && return
-#   [[ -x "/usr/bin/emerge" ]]           && _OSTYPE="PORTAGE" && return
-#   [[ -x "/usr/bin/zypper" ]]           && _OSTYPE="ZYPPER" && return
-#   if [[ -z "$_OSTYPE" ]]; then
-#     _error "No supported package manager installed on system"
-#     _error "(supported: apt, homebrew, pacman, portage, yum)"
-#     exit 1
-#   fi
-# }
-
 # An error exit function
 
 error()
@@ -227,6 +206,8 @@ check_os()
 		#grep "Ubuntu" /etc/issue | wc -l
 	else
 
+
+
 		if DIS="$( which apt-get )" 2> /dev/null; then
 		   DISTRO="Ubuntu"
 		elif DIS="$( which yum )" 2> /dev/null; then
@@ -235,6 +216,9 @@ check_os()
 		   DISTRO="gentoo"
 		elif DIS="$( which pacman )" 2> /dev/null; then
 			DISTRO="Arch"
+		elif test -f "/etc/debian_version"; then
+			DISTRO="Debian"
+  			version=$(cat /etc/debian_version)  			  	
 		else
 		   exit 0
 		fi
@@ -262,7 +246,17 @@ check_dependences()
 check_package_manager()
 {
 
+	#
+	check_os
+	#http://en.wikipedia.org/wiki/List_of_software_package_management_systems
+	show_msn_w "Please wait, try to detect your software package management system"
 	#I should use https://github.com/icy/pacapt
+
+	#If you want test distro uncomment your distro
+	#DISTRO="Arch"
+	#DISTRO="Ubuntu"
+	#DISTRO="Debian"
+
 	if [ "$DISTRO" == "Arch" ];then
 		#PACKAGE_MANAGER="pacman -S "
 		DEPENDENCIES_ARCH="lib32-fontconfig"
@@ -290,6 +284,10 @@ check_package_manager()
 		echo -e "$RED OS Unknow $RESET"
 		exit 0
 	fi
+
+	show_msn_w "Detected software package management system: $BLUE $PACKAGE_MANAGER , debs with $INSTALL_DEB $RESET"
+	show_msn_w "Support .deb: $BLUE $INSTALL_DEB $RESET"
+	show_msn_w "Packages form software package management system: $BLUE $PKG_WPS $RESET"
  
 }
 
@@ -303,8 +301,10 @@ install_wps_arch()
 	if [ ! $? -eq 0 ]; then
 
 		show_msn_w "$1 installed"
+		return 1
 	else
 		show_msn_w "$1 $RED no installed $RESET"
+		return 0
 
 	fi
 }
@@ -346,6 +346,8 @@ install_with_package_manager()
 					  error "$LINENO: Aborting dependences: $DEPENDENCIES_ARCH not found on $DISTRO"
 				fi			
 			fi
+		else
+			return 0
 		fi
 
 		# sudo apt-get install git
@@ -355,7 +357,14 @@ install_with_package_manager()
 
 	fi
 
+	show_msn_w "Please wait -- $PACKAGE_MANAGER $PKG_WPS"
 	su -c "$PACKAGE_MANAGER $PKG_WPS"
+
+	if test $? -eq 0; then
+    	show_msn_w "ERROR"
+    	return 1
+    	
+  	fi
 
 	#su -c "$PACKAGE_MANAGER $1"
 
@@ -376,13 +385,20 @@ install_dependences()
 	for dep in $DEPENDENCIES
         do
              if ! which $dep &>/dev/null;  then                        
-                        echo "============================================================";
-                        echo "***** Try to install $dep, please wait ..";
-                        echo "============================================================";
+                        show_msn_w "============================================================";
+                        show_msn_w "***** Try to install $dep, please wait ..";
+                        show_msn_w "============================================================";
+
+                        install_with_package_manager
+
+                        exit 0
 
                         if [ ! install_with_package_manager ]; then
                         	echo "I can install dependences, please wait"                        
-
+                        	return 0
+                        else
+                        	show_msn_w "Todo bien"
+                        	return 1
                         fi
 
              fi
@@ -467,7 +483,7 @@ install_lang_es()
 		# Second attempt at checking return codes
 		#grep "^${1}:" /etc/passwd > /dev/null 2>&13
 		if [ "$?" -ne "0" ]; then
-	  		echo "Sorry, cannot find user ${1} in /etc/passwd"
+	  		echo "Sorry, cannot find make"
 	  		exit 1
 		fi
 
@@ -491,6 +507,8 @@ install_lang_es()
 			show_msn_w "More info: install zip language kingsoft office"
 			show_msn_w "Updating font cache... $RESET "
 			su -c "fc-cache -f -v > /dev/null"
+
+			return 0
 		fi
 	fi
 
@@ -757,7 +775,7 @@ install()
 										#    gtk and gtk2 (rcc-gtk-config and rcc-gtk2-config)
 
 										#pacman -Si librcc | grep Depends
-										install_wps_arch libcups librcc taglib-rcc gtk2 vlc-git
+										install_wps_arch libcups librcc taglib-rcc gtk2
 										install_wps_arch kingsoft-office 
 
 										#Bugs rcc + qt4
@@ -897,12 +915,36 @@ install()
 
 		#check libs 
 		which rcc
-
 		which lrelease-qt4
 
+		# Check that target file wps.deb exists
+		if [ ! -f $PATH_DEB ]; then
+	        echo -e "$WHITE Please wait, try download wps... $RESET"
+	        sleep 1
+	        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
+			if wget $WPS_DEB -O "${DEB}";then 
+				#seach file
+				# if [ test $? -eq 0 ];then
+			 #  		echo "No command-line arguments."
+				# else
+			 #  		echo "First command-line argument is $1."
+				# fi
+
+				if [ -f $DEB ]; then
+					echo -e "$GREEN Download complete $RESET"
+				else 
+					exit 0
+				fi
+			fi
+		fi
+
+		echo -e "$WHITE Plase wait, try to install Package $RESET"
+		
+
+		install_with_deb $PATH_DEB
+		install_with_package_manager 
 
 
-    	install_lang_es
   	;;
  	*)
 
@@ -930,33 +972,31 @@ unistall()
 	su -c "dpkg -r wps-office"
 }
 
-
-
 #first check depen
 check_os
 #then ckeck dependences for this distro
 check_dependences
 
-#try to install
-install $DISTRO
-
 #install_lang_es
 
 #Testing all dependences 
-echo "============================================================";
-echo -e "\n Please wait, checking dependences .. \n"
-echo "============================================================";
+show_msn_w "============================================================";
+show_msn_w "\n Please wait, checking dependences .. \n"
+show_msn_w "============================================================";
 
-if [ "$DEPS_ALT"=="NO" ]; then
+
+if [ "$DEPS_ALT" == "NO" ]; then
 
 	echo -e "$RED The operative system missing dependencies for the following libraries ... $RESET"
 
 	read -p "Do you wish to install dependences? [Yes (y) / No (n)]" choice
 	case "$choice" in 
 	  y|Y ) echo "yes"
-			install_dependences
-
-			echo "complete install"
+			if install_dependences; then
+				echo "complete install"
+			else
+				show_msn_w "I can't install dependences"
+			fi
 			;;
 	  n|N ) exit 0
 		
@@ -967,52 +1007,27 @@ fi
 
 #check if exist wps (Kingsoft office)
 if ! which wps &>/dev/null;  then
-	echo "============================================================";
-	echo "***** This script requires WPS to run but it is not installed";
-	echo "============================================================";
+	show_msn_w "============================================================";
+	show_msn_w "**This script requires WPS (Kingsoft Office) to run but it is not installed";
+	show_msn_w "============================================================";
 
-	# Check that target file wps.deb exists
-	if [ ! -f $PATH_DEB ]; then
-        echo -e "$WHITE Please wait, try download wps... $RESET"
-        sleep 1
-        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
-		if wget $WPS_DEB -O "${DEB}";then 
-			#seach file
-			# if [ test $? -eq 0 ];then
-		 #  		echo "No command-line arguments."
-			# else
-		 #  		echo "First command-line argument is $1."
-			# fi
-
-			if [ -f $DEB ]; then
-				echo -e "$GREEN Download complete $RESET"
-			else 
-				exit 0
-			fi
-		fi
-	fi
-
-	echo -e "$WHITE Plase wait, try to install Package $RESET"
-	
-
-	install_with_deb $PATH_DEB
-	install_with_package_manager 
+	#try to install
+	install $DISTRO
 	#install_with_package_manager 
 	
-
 fi
 
 install_lang_es
 
 exit 0
 
-cd /opt/kingsoft/wps-office/office6/2052
-sudo rm qt.qm wps.qm wpp.qm et.qm
+# cd /opt/kingsoft/wps-office/office6/2052
+# sudo rm qt.qm wps.qm wpp.qm et.qm
 
-wget -a http://wdl.cache.ijinshan.com/wps/download/Linux/unstable/wps-office_8.1.0.3724~b1p2_i386.deb
-sudo dpkg -i wps-office_8.1.0.3724~b1p2_i386.deb
+# wget -a http://wdl.cache.ijinshan.com/wps/download/Linux/unstable/wps-office_8.1.0.3724~b1p2_i386.deb
+# sudo dpkg -i wps-office_8.1.0.3724~b1p2_i386.deb
 
-curl -O https://raw.githubusercontent.com/erpmtics/erpmtics/testing/tools/build/make-linux.sh
-/bin/bash make-linux.sh
+# curl -O https://raw.githubusercontent.com/erpmtics/erpmtics/testing/tools/build/make-linux.sh
+# /bin/bash make-linux.sh
 
-su -c " yum -y install wget && wget -P/etc/yum.repos.d/ https://raw.github.com/kuboosoft/postinstallerf/master/postinstallerf.repo && yum -y install wps-i18n-es "
+# su -c " yum -y install wget && wget -P/etc/yum.repos.d/ https://raw.github.com/kuboosoft/postinstallerf/master/postinstallerf.repo && yum -y install wps-i18n-es "
