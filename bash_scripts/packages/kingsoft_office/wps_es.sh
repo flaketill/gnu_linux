@@ -67,6 +67,7 @@ RESET="\033[0m"
 WHITE="\033[1;37m"
 BLUE="\033[1;34m"
 RED="\033[1;31m"
+YELLOW="\033[1;33m"
 
 THIS_SCRIPT_PATH=`readlink -f $0`
 THIS_SCRIPT_DIR=`dirname ${THIS_SCRIPT_PATH}`
@@ -314,9 +315,25 @@ install_with_package_manager()
 	check_package_manager
 	echo -e "$WHITE Please wait, exec command; $BLUE $PACKAGE_MANAGER $PKG_WPS $RESET"
 
+	show_msn_w "Please wait -- $PACKAGE_MANAGER $PKG_WPS"
+	show_msn_w "Please wait -- $PACKAGE_MANAGER $1"
+
+	show_msn_w "$YELLOW Plase your password for install $1: $RESET"
+	su -c "$PACKAGE_MANAGER $1" &>/dev/null #on arch error like if fail hide with &>/dev/null
+
+	if test $? -eq 0; then
+    	show_msn_w "Package $1 installed"
+    	return 0  #if installed retiurn 0     	
+    else
+    	#for example if package not exist on pacman or packer liek Package `ax' does not exist.
+    	show_msn_w "$LINENO: Error when try install with $PACKAGE_MANAGER the package $1"
+    	return 1 #if not install
+    	
+  	fi
+
 	if [ "$DISTRO" == "Arch" ];then
 
-
+		show_msn_w "Arch Linux or distro with pacman"
 		su -c "$PACKAGE_MANAGER $DEPENDENCIES_ARCH &> /dev/null"
 		retval=$?
 		#do_something $retval
@@ -357,14 +374,14 @@ install_with_package_manager()
 
 	fi
 
-	show_msn_w "Please wait -- $PACKAGE_MANAGER $PKG_WPS"
-	su -c "$PACKAGE_MANAGER $PKG_WPS"
+	#show_msn_w "Please wait -- $PACKAGE_MANAGER $PKG_WPS"
+	# su -c "$PACKAGE_MANAGER $PKG_WPS"
 
-	if test $? -eq 0; then
-    	show_msn_w "ERROR"
-    	return 1
+	# if test $? -eq 0; then
+ #    	show_msn_w "ERROR"
+ #    	return 1
     	
-  	fi
+ #  	fi
 
 	#su -c "$PACKAGE_MANAGER $1"
 
@@ -389,17 +406,25 @@ install_dependences()
                         show_msn_w "***** Try to install $dep, please wait ..";
                         show_msn_w "============================================================";
 
-                        install_with_package_manager
+                        install_with_package_manager $dep
 
-                        exit 0
+                        if test $? -eq 0; then
+    						show_msn_w "Success installed dependence: $1"				
+    						return 0 #package installed without error
+    					else
+							show_msn_w "$LINENO --  ERROR no installd dependence: $1"
+    						return 1
+  						fi
 
-                        if [ ! install_with_package_manager ]; then
-                        	echo "I can install dependences, please wait"                        
-                        	return 0
-                        else
-                        	show_msn_w "Todo bien"
-                        	return 1
-                        fi
+                        #exit 0
+
+                        #if [ ! $( install_with_package_manager $dep) ]; then
+                        # 	show_msn_w "I can install dependences, please wait"                        
+                        # 	return 0
+                        # else
+                        # 	show_msn_w "Todo bien"
+                        # 	return 1
+                        # fi
 
              fi
 
@@ -775,8 +800,20 @@ install()
 										#    gtk and gtk2 (rcc-gtk-config and rcc-gtk2-config)
 
 										#pacman -Si librcc | grep Depends
-										install_wps_arch libcups librcc taglib-rcc gtk2
-										install_wps_arch kingsoft-office 
+										# install_wps_arch libcups 
+										# install_wps_arch librcc 
+										# install_wps_arch taglib-rcc 
+										# install_wps_arch gtk2
+										# install_wps_arch kingsoft-office 
+
+										install_with_package_manager libcups
+										install_with_package_manager librcc
+										install_with_package_manager taglib-rcc
+										install_with_package_manager gtk2
+										install_with_package_manager kingsoft-office
+
+
+
 
 										#Bugs rcc + qt4
 										# https://bugs.archlinux.org/task/5974
@@ -793,6 +830,7 @@ install()
 											ps auxw | grep wps | grep -v grep > /dev/null
 
 											if [ $? != 0 ];then
+												show_msn_w "$GREEN Please close Kingsoft office, if open "
 												show_msn_w "Operation completed ..."																						    
 											fi									
 
@@ -992,11 +1030,23 @@ if [ "$DEPS_ALT" == "NO" ]; then
 	read -p "Do you wish to install dependences? [Yes (y) / No (n)]" choice
 	case "$choice" in 
 	  y|Y ) echo "yes"
-			if install_dependences; then
-				echo "complete install"
-			else
-				show_msn_w "I can't install dependences"
-			fi
+
+
+            install_dependences
+
+            if test $? -eq 0; then
+            	#package installed without error
+            	show_msn_w "$GREEN #############Dependences it's OK ############# $RESET"				            	
+    		else
+    			show_msn_w "$LINENO -- ERROR $RED I can't continue without dependences: $DEPENDENCIES $RESET"    			
+    		fi
+
+			# if install_dependences; then
+			# 	echo "complete install"
+			# else
+			# 	show_msn_w "I can't install dependences"
+			# fi
+
 			;;
 	  n|N ) exit 0
 		
@@ -1017,7 +1067,28 @@ if ! which wps &>/dev/null;  then
 	
 fi
 
+#
 install_lang_es
+
+show_msn_w "$GREEN installation completed $RESET"
+
+#i don't use cat beacuse the script show with colors on shell
+show_msn_w "#######################$RED IMPORTANT $RESET #######################"
+show_msn_w "#####  If are install kingsoft office, please go to home:"
+show_msn_w "#####                                              			   "
+show_msn_w "#####  On your terminal                                        "
+show_msn_w "#####  1. [$USER@$HOSTNAME build]$ cd $HOME			          "
+show_msn_w "#####  2. [$USER@$HOSTNAME build]$ ls | grep \"es.zip\"        "
+show_msn_w "#####                                             			   "
+show_msn_w "#####  if exist file called:  es.zip                           "
+show_msn_w "#####  1. Open kingsoft-office                                 "
+show_msn_w "#####     [$USER@$HOSTNAME build]$ wps                         "
+show_msn_w "#####                                             			   "
+show_msn_w "#####  Go to change language and then click on Install new language "
+show_msn_w "#####  and finally close kingsoft office (Restart)             "
+show_msn_w "#####  When you open kingsoft office, the interface should be spanish (Español)"
+show_msn_w "#######################$RED IMPORTANT $RESET #######################"
+
 
 exit 0
 
