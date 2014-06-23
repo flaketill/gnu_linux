@@ -85,7 +85,6 @@ YELLOW="\033[1;33m"
 
 USE_GUI=1
 
-
 show_msn_w()
 {
 
@@ -233,7 +232,6 @@ print_version_dialog()
 
 delete_files()
 {
-FILES_TO_DELETE="/home/armando/new_data2014/sh/armando/bash/gnu_linux/bash_scripts/packages/git/git_helper/build/CMakeCache.txt /home/armando/new_data2014/sh/armando/bash/gnu_linux/bash_scripts/packages/git/git_helper/build/Makefile"
 
 for FILE in "${FILES_TO_DELETE}"; do
 
@@ -248,10 +246,12 @@ for FILE in "${FILES_TO_DELETE}"; do
 	fi
 
 done
+
 }
 
 delete_dirs()
 {
+
 for DIR in "${DIRS_TO_DELETE}"; do
 	#statements
 	
@@ -263,6 +263,7 @@ for DIR in "${DIRS_TO_DELETE}"; do
 	fi
 
 done
+
 }
 
 
@@ -285,7 +286,11 @@ options_map()
 
 run_cmake() 
 {
-	show_msn_w "Runing cmake"
+	clear
+	show_msn_w "Runing cmake ..."
+	delete_files
+	delete_dirs
+	cmake $PATH_CMAKE_LIST
 }
 
 ############################################################
