@@ -106,6 +106,8 @@ DISTROS_SUPPORT="Arch Ubuntu Debian"
 DISTRO="none"
 PACKAGE_MANAGER="none"
 
+BITS="none"
+
 #packages on pacman, apt-get etc
 #https://aur.archlinux.org/packages/wpsforlinux/
 ARCH_WPS="wpsforlinux" #https://aur.archlinux.org/packages/kingsoft-office/"
@@ -183,6 +185,8 @@ check_os()
 {
 	ARCH=$(uname -m)
 
+	echo $ARCH
+
 	if [ "$ARCH" == 'x86_64' ];then
 		#64 bits
 	    BITS="64"
@@ -257,6 +261,8 @@ check_package_manager()
 	#DISTRO="Arch"
 	#DISTRO="Ubuntu"
 	#DISTRO="Debian"
+
+	echo $DISTRO
 
 	if [ "$DISTRO" == "Arch" ];then
 		#PACKAGE_MANAGER="pacman -S "
@@ -439,6 +445,10 @@ install_lang_es()
 
 	show_msn_w "clone on $PATH_CLONE"
 
+	if [ ! -d "${TMP_CONF}" ]; then
+		mkdir "${TMP_CONF}"
+	fi
+
 	# Check if backup folder exists if not create them
 	if [ ! -d "$PATH_CLONE" ]; then
   		
@@ -446,23 +456,27 @@ install_lang_es()
 
 	  		#if wget $ULR_ES -O "wps_i18n";then 
 	  		#best clone repo from git
+	  		mkdir 
 	  		show_msn_w "Cloning repo:  $BLUE $URL_GIT_REPO $RESET"
 
-	  		if cd "${TMP_CONF}";then
+	  		if [  -d "${TMP_CONF}" ]; then
 
-		  		if git clone "${URL_GIT_REPO}";then 
+		  		if cd "${TMP_CONF}";then
 
-					if [ -d "${PATH_CLONE}" ]; then
-						echo -e "$GREEN Download complete $RESET"
-					else 
-						error_exit "$LINENO: Cannot clone repo Aborting."
+			  		if git clone "${URL_GIT_REPO}";then 
+
+						if [ -d "${PATH_CLONE}" ]; then
+							echo -e "$GREEN Download complete $RESET"
+						else 
+							error_exit "$LINENO: Cannot clone repo Aborting."
+						fi
+					else
+						error_exit "$LINENO: Error cloning repo Aborting."
 					fi
-				else
-					error_exit "$LINENO: Error cloning repo Aborting."
 				fi
 			fi
 		#fi
-	fi
+		fi
 
 	#cd es || error_exit "Cannot change directory! Aborting"
 
@@ -842,7 +856,7 @@ install()
 											# https://aur.archlinux.org/packages/kingsoft-office/
 											# https://aur.archlinux.org/packages/ki/kingsoft-office/PKGBUILD
 											#sudo pacman -R wpsoffice-fonts
-											install_wps_arch wpsforlinux
+											install_with_package_manager wpsforlinux
 
 											#Try run 
 											if [ -d /opt/kingsoft/ ];then
@@ -939,13 +953,190 @@ install()
   	;;
   	'Ubuntu') # Apply each step for Ubuntu
     	#command pacman-g2 -Ss "$2" | awk -vq="$2" '$2~q'
+
+    	#This test on 
+    	#GNU bash, versión 4.2.45(1)-release (x86_64-pc-linux-gnu)
+
+    	#deps lsb-core
+
     	echo "Ubuntu ----"
+
+    	#Kingsoft Office (KSO or KSOffice) is an office suite for Windows, Linux, iOS and Android, developed by now Zhuhai based Chinese software developer Kingsoft.
+
+    	#uname -a
+    	#echo $BITS
+
+    	#dowload linux, window , mac , andorid
+    	#http://www.kingsoftstore.com/download-office
+
+    	#for linux http://wps-community.org/download.html
+
+    	axel -s 204800 -n 10 $WPS_DEB
+
+  		# 32-bit systems type in the following commands
+
+		# wget -O wps.deb $WPS_DEB
+		# sudo dpkg -i wps.deb
+		# rm wps.deb
+
+		# 64-bit systems use these commands
+
+		# sudo dpkg --add-architecture i386 && sudo apt-get update
+		# sudo apt-get install ia32-libs
+		# cd && wget -O wps.deb $WPS_DEB
+		# sudo dpkg -i wps.deb
+		# rm kingsoft-office-NoobsLab.deb
+
+		# sudo apt-get install gdebi && sudo gdebi kingsoft-office_*.deb
+
+    	#unistall http://www.kingsoftstore.com/support-for-android-office/3013-install-or-uninstall-kingsoft-office-for-android.html
+    	#
+    	#sudo apt-get purge wps-office
+    	#sudo apt-get purge wps-office   # for a8 or earlier versions.
+		#sudo apt-get purge kingsoft-office  # for a9 or later versions.
+
+    	arch=$(uname -m)
+    	echo $arch
+
+    	#Checking your Ubuntu Version
+    	lsb_release -a | grep "Release" | awk '{ print $2}' | grep '[0-9]'
+    	lscpu | grep "Architecture\|Arquitectura"
+    	# install_with_package_manager lsb-core  
+    	# install_with_package_manager cpuid
+    	# install_with_package_manager ia32-libs
+
+    	$(lsb_release -sc)
+
+    	[ "$arch" = "x86_64" ] && echo "x86_64" || echo "i686"
+
+  #   	if cpuid -l; then
+		#     echo "amd64"
+		# else
+		#     echo "i386"
+		# fi
+		
+		#grep flags /proc/cpuinfo
+		dpkg --print-architecture
+
+		# Provide usage information if not arguments were supplied
+		if [ "$#" -le 0 ]; then
+		        echo "Usage: $0 <executable> [<argument>...]" >&2
+
+		        #exit 1
+		else 
+			echo "mmm"
+		fi
+
+		# Check if the directory exists
+		if [ -d "$D" ]; then
+		        # If it does, cd into it
+		        cd "$D"
+		        echo "cd on directory"
+		else
+				echo "no exit di"
+
+		        if [ "$D" ]; then
+		                # Complain if a directory was specified, but does not exist
+		                echo "Directory '$D' does not exist" >&2
+
+		                #exit 1
+		        fi
+		fi
+
+
+		[ "$arch" == "x86_64" ] && echo "x86_64" || echo "i686"
+
+		platform='unknown'
+		unamestr==$(uname -m)
+		if [[ "$unamestr" == 'Linux' ]]; then
+		   platform='linux'
+		elif [[ "$unamestr" == 'FreeBSD' ]]; then
+		   platform='freebsd'
+		fi
+
+		echo $platform
+
+		HS_NO=0
+
+		if [ $HS_NO -ge 1 ];then 
+		echo "ok"
+        else
+                echo "No changes -- hosts"
+        fi
+
+        if [ -e $PATH_AR/10-vboxdrv.rules ]; then #if file exist
+        	echo "exit rule 10-vboxdrv"
+        else
+        	echo "no exit rule"
+        fi
+
+        # bash wps_es.sh 
+
+		#Search axel, wget o curl in your OS
+           echo "Por favor espere, buscando dependencias para scripts ..."
+            count_pkg=$(whereis axels | grep -c "bin/axel")
+
+            #echo "instaldo o no: $count_pkg"
+
+            if [ $count_pkg -eq 1 ]; then
+                
+                echo "Ok, dependencias instaladas .."
+                
+            else
+                echo "Ocurrio un error al tratar de instalar dependencias, por favor comuniquese con el Ing. Armando Ibarra .."
+            fi
+
+            #http://stackoverflow.com/questions/687948/timeout-a-command-in-bash-without-unnecessary-delay
+            echo "Proceso terminado, se reiniciara su OS en 3 segundos..."
+
+
+
+    	exit 0
+    	#report_bug
 
     	#Wps instlled on /opt/kingsoft/wps-office/
 
+    	#Try run 
+		if [ -d /opt/kingsoft/ ];then
+			/opt/kingsoft/wps-office/office6/wps
+
+			ps auxw | grep wps | grep -v grep > /dev/null
+
+			if [ $? != 0 ];then
+				show_msn_w "$GREEN Please close Kingsoft office"
+				show_msn_w "Operation completed ..."	
+			else
+				show_msn_warn "You close Kingsoft office"		
+				show_msn_w "Operation completed ..."																			    
+			fi
+
+			Z=$(sudo -u status)
+
+			if [ "$Z" == "Kingsoft isn't running!" ]; then
+			    /opt/kingsoft/wps-office/office6/wps
+			fi
+
+		fi
+
+		echo 'Updating repository information...'
+    	echo 'Requires root privileges:'
+    	sudo apt-get update
+
+    	#search on apt
+    	#Add repository key
+		#sudo apt-key adv --keyserver $URL_SERVER --recv-keys $KEY
+    	#sudo add-apt-repository "deb http://ubuntu $(lsb_release -sc) main"
+    	#sudo apt-get update && sudo apt-get install kinsoft
+
+		#sudo apt-get install ia32-libs 
+
+		exit
     	#sudo apt-get install qt4-dev-tools
     	#libqt4-dev
+    	su -c "Updating "
     	su -c "apt-get install qt4-dev-tools msttcorefonts gsfonts-x11"
+    	sudo apt-get -y install libc6:i386 libgcc1:i386 gcc-4.6-base:i386 libstdc++6:i386 libx11-6:i386 libglib2.0-0:i386 libfreetype6:i386 libSM6:i386 libXrender1:i386 libfontconfig1:i386 libXext6:i386 libcups2:i386 p11-kit:i386 libcap-ng0:i386 gnome-keyring:i386 libglu1-mesa:i386
+    	sudo dpkg -i kingsoft-office_9.1.0.4244~a12p3_i386.deb
 
   #   	if apt-get -qq install $pkg; then
 		#     echo "Successfully installed $pkg"
@@ -1070,7 +1261,7 @@ if ! which wps &>/dev/null;  then
 fi
 
 #
-install_lang_es
+#install_lang_es
 
 show_msn_w "$GREEN installation completed $RESET"
 

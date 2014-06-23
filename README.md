@@ -11,5 +11,13 @@ Structure:
 	* distros - Specific Distro bash or python scripts 
 	* python_scripts - For python script not specific Distro (support a lot of distros)
 
+Run on Arch Linux 
+
+sh .sh
+
+Run on Ubuntu like for evit [ :Unexpected operator in shell programming on the scripts
+
+bash .sh
+
 
 18-06-2014
