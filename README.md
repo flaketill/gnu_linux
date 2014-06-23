@@ -12,4 +12,15 @@ Structure:
 	* python_scripts - For python script not specific Distro (support a lot of distros)
 
 
-18-06-2014
+##IMPORTANT notes for GNU/Linux distributions
+
+* Run on Arch Linux
+	
+	sh .sh
+
+* Run on Ubuntu like for evit [ :Unexpected operator in shell programming on the scripts
+
+	bash .sh
+
+23-06-2014
+
