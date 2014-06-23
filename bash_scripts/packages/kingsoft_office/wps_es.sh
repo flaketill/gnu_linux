@@ -106,6 +106,8 @@ DISTROS_SUPPORT="Arch Ubuntu Debian"
 DISTRO="none"
 PACKAGE_MANAGER="none"
 
+BITS="none"
+
 #packages on pacman, apt-get etc
 #https://aur.archlinux.org/packages/wpsforlinux/
 ARCH_WPS="wpsforlinux" #https://aur.archlinux.org/packages/kingsoft-office/"
@@ -183,6 +185,8 @@ check_os()
 {
 	ARCH=$(uname -m)
 
+	echo $ARCH
+
 	if [ "$ARCH" == 'x86_64' ];then
 		#64 bits
 	    BITS="64"
@@ -258,6 +262,8 @@ check_package_manager()
 	#DISTRO="Ubuntu"
 	#DISTRO="Debian"
 
+	echo $DISTRO
+
 	if [ "$DISTRO" == "Arch" ];then
 		#PACKAGE_MANAGER="pacman -S "
 		DEPENDENCIES_ARCH="lib32-fontconfig"
@@ -326,7 +332,7 @@ install_with_package_manager()
     	return 0  #if installed retiurn 0     	
     else
     	#for example if package not exist on pacman or packer liek Package `ax' does not exist.
-    	show_msn_w "$LINENO: Error when try install with $PACKAGE_MANAGER the package $1"
+    	show_msn_warn "$LINENO: Error when try install with $PACKAGE_MANAGER the package $1"
     	return 1 #if not install
     	
   	fi
@@ -394,6 +400,14 @@ install_with_deb()
 	check_package_manager
 	su -c "$INSTALL_DEB $1"
 
+	if test $? -eq 0; then
+		show_msn_w "Success installed $1"				
+		return 0 #package installed without error
+    else
+    	show_msn_w "$LINENO --  ERROR i can't install with $1"
+    	return 1
+  	fi
+
 }
 
 install_dependences()
@@ -439,6 +453,10 @@ install_lang_es()
 
 	show_msn_w "clone on $PATH_CLONE"
 
+	if [ ! -d "${TMP_CONF}" ]; then
+		mkdir "${TMP_CONF}"
+	fi
+
 	# Check if backup folder exists if not create them
 	if [ ! -d "$PATH_CLONE" ]; then
   		
@@ -446,23 +464,27 @@ install_lang_es()
 
 	  		#if wget $ULR_ES -O "wps_i18n";then 
 	  		#best clone repo from git
+	  		mkdir 
 	  		show_msn_w "Cloning repo:  $BLUE $URL_GIT_REPO $RESET"
 
-	  		if cd "${TMP_CONF}";then
+	  		if [  -d "${TMP_CONF}" ]; then
 
-		  		if git clone "${URL_GIT_REPO}";then 
+		  		if cd "${TMP_CONF}";then
 
-					if [ -d "${PATH_CLONE}" ]; then
-						echo -e "$GREEN Download complete $RESET"
-					else 
-						error_exit "$LINENO: Cannot clone repo Aborting."
+			  		if git clone "${URL_GIT_REPO}";then 
+
+						if [ -d "${PATH_CLONE}" ]; then
+							echo -e "$GREEN Download complete $RESET"
+						else 
+							error_exit "$LINENO: Cannot clone repo Aborting."
+						fi
+					else
+						error_exit "$LINENO: Error cloning repo Aborting."
 					fi
-				else
-					error_exit "$LINENO: Error cloning repo Aborting."
 				fi
 			fi
 		#fi
-	fi
+		fi
 
 	#cd es || error_exit "Cannot change directory! Aborting"
 
@@ -842,7 +864,7 @@ install()
 											# https://aur.archlinux.org/packages/kingsoft-office/
 											# https://aur.archlinux.org/packages/ki/kingsoft-office/PKGBUILD
 											#sudo pacman -R wpsoffice-fonts
-											install_wps_arch wpsforlinux
+											install_with_package_manager wpsforlinux
 
 											#Try run 
 											if [ -d /opt/kingsoft/ ];then
@@ -939,50 +961,158 @@ install()
   	;;
   	'Ubuntu') # Apply each step for Ubuntu
     	#command pacman-g2 -Ss "$2" | awk -vq="$2" '$2~q'
-    	echo "Ubuntu ----"
 
-    	#Wps instlled on /opt/kingsoft/wps-office/
+    	#This test on 
+    	#GNU bash, versión 4.2.45(1)-release (x86_64-pc-linux-gnu)
 
-    	#sudo apt-get install qt4-dev-tools
-    	#libqt4-dev
-    	su -c "apt-get install qt4-dev-tools msttcorefonts gsfonts-x11"
+    	#deps lsb-core
+   #  	#Kingsoft Office (KSO or KSOffice) is an office suite for Windows, Linux, iOS and Android, developed by now Zhuhai based Chinese software developer Kingsoft.
+   #  	#uname -a
+   #  	#ia32-libs
 
-  #   	if apt-get -qq install $pkg; then
-		#     echo "Successfully installed $pkg"
-		# else
-		#     echo "Error installing $pkg"
-		# fi
+    	if [ "$BITS" == "64" ];then #64-bit systems use these commands
+    		#install_with_package_manager ia32-libs
+    		show_msn_w 'Updating repository information...'
+    		show_msn_w 'Requires root privileges:'
+    		sudo dpkg --add-architecture i386 && sudo apt-get update && install_with_package_manager ia32-libs
+    	fi    	
 
-		#check libs 
-		which rcc
-		which lrelease-qt4
+    	#dowload linux, window , mac , andorid
+    	#http://www.kingsoftstore.com/download-office    	
 
-		# Check that target file wps.deb exists
-		if [ ! -f $PATH_DEB ]; then
-	        echo -e "$WHITE Please wait, try download wps... $RESET"
-	        sleep 1
-	        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
-			if wget $WPS_DEB -O "${DEB}";then 
-				#seach file
-				# if [ test $? -eq 0 ];then
-			 #  		echo "No command-line arguments."
-				# else
-			 #  		echo "First command-line argument is $1."
-				# fi
+    	#for linux http://wps-community.org/download.html
+    	DEB_FOUND=1
 
-				if [ -f $DEB ]; then
-					echo -e "$GREEN Download complete $RESET"
-				else 
-					exit 0
-				fi
+    	if [ -f kingsoft-office_*.deb ]; then
+			show_msn_w "Search .deb on direct"
+			show_msn_w "Try install with .deb"
+
+			install_with_deb kingsoft-office_*.deb
+
+			if test $? -eq 0; then				
+				show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+			else
+				DEB_FOUND=0
+				show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
 			fi
+
+    	fi
+
+    	if [ $DEB_FOUND -eq 0 ]; then
+
+	    	if axel -s 204800 -n 10 $WPS_DEB; then
+
+	    		NO_DEBS=$( ls kingsoft-office_*.deb | wc -l )
+
+	    		if [ $NO_DEBS -eq 1 ];then 
+	    			echo "Download completed"
+
+	    				install_with_deb kingsoft-office_*.deb
+
+						if test $? -eq 0; then
+							show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+					    else
+					    	show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
+					    fi
+	    		fi
+	    	fi
+	    fi
+		
+    	#Try run 
+		if [ -d /opt/kingsoft/ ];then
+
+			show_msn_w "OK"
+
+			/opt/kingsoft/wps-office/office6/wps
+
+			ps auxw | grep wps | grep -v grep > /dev/null
+
+			if [ $? != 0 ];then
+				show_msn_w "$GREEN Please close Kingsoft office"
+				show_msn_w "Operation completed ..."	
+			else
+				show_msn_warn "You close Kingsoft office"		
+				show_msn_w "Operation completed ..."																			    
+			fi
+
+			Z=$(sudo -u status)
+
+			if [ "$Z" == "Kingsoft isn't running!" ]; then
+			    /opt/kingsoft/wps-office/office6/wps
+			fi
+
 		fi
 
-		echo -e "$WHITE Plase wait, try to install Package $RESET"
-		
+		#Install dependences for generate spanish with libqt4-dev
+		#optionals
+		install_with_package_manager msttcorefonts 
+		install_with_package_manager gsfonts-x11
 
-		install_with_deb $PATH_DEB
-		install_with_package_manager 
+		show_msn_w "Try to install qt4-dev-tools, please be patient as this Could take several long"
+
+		#requiered if not exist show message to user
+		install_with_package_manager qt4-dev-tools 
+
+        if test $? -eq 0; then
+        	show_msn_w "Success installed dependence qt4-dev-tools "				    					
+        else
+        	show_msn_w "$LINENO --  ERROR i can't install qt4-dev-tools, which cause i can't generate zip for spanish language"
+        	exit 0
+    	fi
+
+		#sudo apt-get -y install libc6:i386 libgcc1:i386 gcc-4.6-base:i386 libstdc++6:i386 libx11-6:i386 libglib2.0-0:i386 libfreetype6:i386 libSM6:i386 libXrender1:i386 libfontconfig1:i386 libXext6:i386 libcups2:i386 p11-kit:i386 libcap-ng0:i386 gnome-keyring:i386 libglu1-mesa:i386
+
+		#check libs 
+		# which rcc
+		# which lrelease-qt4
+
+		# # Check that target file wps.deb exists
+		# if [ ! -f $PATH_DEB ]; then
+	 #        echo -e "$WHITE Please wait, try download wps... $RESET"
+	 #        sleep 1
+	 #        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
+		# 	if wget $WPS_DEB -O "${DEB}";then 
+		# 		#seach file
+		# 		# if [ test $? -eq 0 ];then
+		# 	 #  		echo "No command-line arguments."
+		# 		# else
+		# 	 #  		echo "First command-line argument is $1."
+		# 		# fi
+
+		# 		if [ -f $DEB ]; then
+		# 			echo -e "$GREEN Download complete $RESET"
+		# 		else 
+		# 			exit 0
+		# 		fi
+		# 	fi
+		# fi
+
+    	#du -h kingsoft-office_9.1.0.4280~a12p4_i386.deb like 141M	kingsoft-office_9.1.0.4280~a12p4_i386.deb
+
+  		# 32-bit systems type in the following commands
+
+		# wget -O wps.deb $WPS_DEB
+		# sudo dpkg -i wps.deb
+		# rm wps.deb
+
+		# sudo apt-get install gdebi && sudo gdebi kingsoft-office_*.deb
+
+    	#unistall http://www.kingsoftstore.com/support-for-android-office/3013-install-or-uninstall-kingsoft-office-for-android.html
+    	#
+    	#sudo apt-get purge wps-office
+    	#sudo apt-get purge wps-office   # for a8 or earlier versions.
+		#sudo apt-get purge kingsoft-office  # for a9 or later versions.
+
+    	#report_bug
+
+    	#Wps instlled on /opt/kingsoft/wps-office/
+    	#search on apt
+    	#Add repository key
+		#sudo apt-key adv --keyserver $URL_SERVER --recv-keys $KEY
+    	#sudo add-apt-repository "deb http://ubuntu $(lsb_release -sc) main"
+    	#sudo apt-get update && sudo apt-get install kinsoft
+
+    	exit 0
 
 
   	;;
@@ -1016,7 +1146,6 @@ unistall()
 check_os
 #then ckeck dependences for this distro
 check_dependences
-
 #install_lang_es
 
 #Testing all dependences 
@@ -1070,7 +1199,7 @@ if ! which wps &>/dev/null;  then
 fi
 
 #
-install_lang_es
+#install_lang_es
 
 show_msn_w "$GREEN installation completed $RESET"
 
