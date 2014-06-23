@@ -968,53 +968,53 @@ install()
    #  	#uname -a
    #  	#ia32-libs
 
-   #  	if [ "$BITS" == "64" ];then #64-bit systems use these commands
-   #  		#install_with_package_manager ia32-libs
-   #  		show_msn_w 'Updating repository information...'
-   #  		show_msn_w 'Requires root privileges:'
-   #  		sudo dpkg --add-architecture i386 && sudo apt-get update && install_with_package_manager ia32-libs
-   #  	fi    	
+    	if [ "$BITS" == "64" ];then #64-bit systems use these commands
+    		#install_with_package_manager ia32-libs
+    		show_msn_w 'Updating repository information...'
+    		show_msn_w 'Requires root privileges:'
+    		sudo dpkg --add-architecture i386 && sudo apt-get update && install_with_package_manager ia32-libs
+    	fi    	
 
-   #  	#dowload linux, window , mac , andorid
-   #  	#http://www.kingsoftstore.com/download-office    	
+    	#dowload linux, window , mac , andorid
+    	#http://www.kingsoftstore.com/download-office    	
 
-   #  	#for linux http://wps-community.org/download.html
-   #  	DEB_FOUND=1
+    	#for linux http://wps-community.org/download.html
+    	DEB_FOUND=1
 
-   #  	if [ -f kingsoft-office_*.deb ]; then
-			# show_msn_w "Search .deb on direct"
-			# show_msn_w "Try install with .deb"
+    	if [ -f kingsoft-office_*.deb ]; then
+			show_msn_w "Search .deb on direct"
+			show_msn_w "Try install with .deb"
 
-			# install_with_deb kingsoft-office_*.deb
+			install_with_deb kingsoft-office_*.deb
 
-			# if test $? -eq 0; then				
-			# 	show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
-			# else
-			# 	DEB_FOUND=0
-			# 	show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
-			# fi
+			if test $? -eq 0; then				
+				show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+			else
+				DEB_FOUND=0
+				show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
+			fi
 
-   #  	fi
+    	fi
 
-   #  	if [ $DEB_FOUND -eq 0 ]; then
+    	if [ $DEB_FOUND -eq 0 ]; then
 
-	  #   	if axel -s 204800 -n 10 $WPS_DEB; then
+	    	if axel -s 204800 -n 10 $WPS_DEB; then
 
-	  #   		NO_DEBS=$( ls kingsoft-office_*.deb | wc -l )
+	    		NO_DEBS=$( ls kingsoft-office_*.deb | wc -l )
 
-	  #   		if [ $NO_DEBS -eq 1 ];then 
-	  #   			echo "Download completed"
+	    		if [ $NO_DEBS -eq 1 ];then 
+	    			echo "Download completed"
 
-	  #   				install_with_deb kingsoft-office_*.deb
+	    				install_with_deb kingsoft-office_*.deb
 
-			# 			if test $? -eq 0; then
-			# 				show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
-			# 		    else
-			# 		    	show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
-			# 		    fi
-	  #   		fi
-	  #   	fi
-	  #   fi
+						if test $? -eq 0; then
+							show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+					    else
+					    	show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
+					    fi
+	    		fi
+	    	fi
+	    fi
 		
     	#Try run 
 		if [ -d /opt/kingsoft/ ];then
@@ -1144,11 +1144,6 @@ unistall()
 check_os
 #then ckeck dependences for this distro
 check_dependences
-
-install $DISTRO
-
-exit 0
-
 #install_lang_es
 
 #Testing all dependences 
