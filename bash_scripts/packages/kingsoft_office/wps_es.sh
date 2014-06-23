@@ -332,7 +332,7 @@ install_with_package_manager()
     	return 0  #if installed retiurn 0     	
     else
     	#for example if package not exist on pacman or packer liek Package `ax' does not exist.
-    	show_msn_w "$LINENO: Error when try install with $PACKAGE_MANAGER the package $1"
+    	show_msn_warn "$LINENO: Error when try install with $PACKAGE_MANAGER the package $1"
     	return 1 #if not install
     	
   	fi
@@ -399,6 +399,14 @@ install_with_deb()
 {
 	check_package_manager
 	su -c "$INSTALL_DEB $1"
+
+	if test $? -eq 0; then
+		show_msn_w "Success installed $1"				
+		return 0 #package installed without error
+    else
+    	show_msn_w "$LINENO --  ERROR i can't install with $1"
+    	return 1
+  	fi
 
 }
 
@@ -958,146 +966,63 @@ install()
     	#GNU bash, versión 4.2.45(1)-release (x86_64-pc-linux-gnu)
 
     	#deps lsb-core
+   #  	#Kingsoft Office (KSO or KSOffice) is an office suite for Windows, Linux, iOS and Android, developed by now Zhuhai based Chinese software developer Kingsoft.
+   #  	#uname -a
+   #  	#ia32-libs
 
-    	echo "Ubuntu ----"
-
-    	#Kingsoft Office (KSO or KSOffice) is an office suite for Windows, Linux, iOS and Android, developed by now Zhuhai based Chinese software developer Kingsoft.
-
-    	#uname -a
-    	#echo $BITS
+    	if [ "$BITS" == "64" ];then #64-bit systems use these commands
+    		#install_with_package_manager ia32-libs
+    		show_msn_w 'Updating repository information...'
+    		show_msn_w 'Requires root privileges:'
+    		sudo dpkg --add-architecture i386 && sudo apt-get update && install_with_package_manager ia32-libs
+    	fi    	
 
     	#dowload linux, window , mac , andorid
-    	#http://www.kingsoftstore.com/download-office
+    	#http://www.kingsoftstore.com/download-office    	
 
     	#for linux http://wps-community.org/download.html
+    	DEB_FOUND=1
 
-    	axel -s 204800 -n 10 $WPS_DEB
+    	if [ -f kingsoft-office_*.deb ]; then
+			show_msn_w "Search .deb on direct"
+			show_msn_w "Try install with .deb"
 
-  		# 32-bit systems type in the following commands
+			install_with_deb kingsoft-office_*.deb
 
-		# wget -O wps.deb $WPS_DEB
-		# sudo dpkg -i wps.deb
-		# rm wps.deb
+			if test $? -eq 0; then				
+				show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+			else
+				DEB_FOUND=0
+				show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
+			fi
 
-		# 64-bit systems use these commands
+    	fi
 
-		# sudo dpkg --add-architecture i386 && sudo apt-get update
-		# sudo apt-get install ia32-libs
-		# cd && wget -O wps.deb $WPS_DEB
-		# sudo dpkg -i wps.deb
-		# rm kingsoft-office-NoobsLab.deb
+    	if [ $DEB_FOUND -eq 0 ]; then
 
-		# sudo apt-get install gdebi && sudo gdebi kingsoft-office_*.deb
+	    	if axel -s 204800 -n 10 $WPS_DEB; then
 
-    	#unistall http://www.kingsoftstore.com/support-for-android-office/3013-install-or-uninstall-kingsoft-office-for-android.html
-    	#
-    	#sudo apt-get purge wps-office
-    	#sudo apt-get purge wps-office   # for a8 or earlier versions.
-		#sudo apt-get purge kingsoft-office  # for a9 or later versions.
+	    		NO_DEBS=$( ls kingsoft-office_*.deb | wc -l )
 
-    	arch=$(uname -m)
-    	echo $arch
+	    		if [ $NO_DEBS -eq 1 ];then 
+	    			echo "Download completed"
 
-    	#Checking your Ubuntu Version
-    	lsb_release -a | grep "Release" | awk '{ print $2}' | grep '[0-9]'
-    	lscpu | grep "Architecture\|Arquitectura"
-    	# install_with_package_manager lsb-core  
-    	# install_with_package_manager cpuid
-    	# install_with_package_manager ia32-libs
+	    				install_with_deb kingsoft-office_*.deb
 
-    	$(lsb_release -sc)
-
-    	[ "$arch" = "x86_64" ] && echo "x86_64" || echo "i686"
-
-  #   	if cpuid -l; then
-		#     echo "amd64"
-		# else
-		#     echo "i386"
-		# fi
+						if test $? -eq 0; then
+							show_msn_w "$GREEN #############Kingsoft office Installed with dpkg ############# $RESET"				            	
+					    else
+					    	show_msn_w "$LINENO -- ERROR $RED I can't continue error on file kingsoft-office_*.deb $RESET"    			
+					    fi
+	    		fi
+	    	fi
+	    fi
 		
-		#grep flags /proc/cpuinfo
-		dpkg --print-architecture
-
-		# Provide usage information if not arguments were supplied
-		if [ "$#" -le 0 ]; then
-		        echo "Usage: $0 <executable> [<argument>...]" >&2
-
-		        #exit 1
-		else 
-			echo "mmm"
-		fi
-
-		# Check if the directory exists
-		if [ -d "$D" ]; then
-		        # If it does, cd into it
-		        cd "$D"
-		        echo "cd on directory"
-		else
-				echo "no exit di"
-
-		        if [ "$D" ]; then
-		                # Complain if a directory was specified, but does not exist
-		                echo "Directory '$D' does not exist" >&2
-
-		                #exit 1
-		        fi
-		fi
-
-
-		[ "$arch" == "x86_64" ] && echo "x86_64" || echo "i686"
-
-		platform='unknown'
-		unamestr==$(uname -m)
-		if [[ "$unamestr" == 'Linux' ]]; then
-		   platform='linux'
-		elif [[ "$unamestr" == 'FreeBSD' ]]; then
-		   platform='freebsd'
-		fi
-
-		echo $platform
-
-		HS_NO=0
-
-		if [ $HS_NO -ge 1 ];then 
-		echo "ok"
-        else
-                echo "No changes -- hosts"
-        fi
-
-        if [ -e $PATH_AR/10-vboxdrv.rules ]; then #if file exist
-        	echo "exit rule 10-vboxdrv"
-        else
-        	echo "no exit rule"
-        fi
-
-        # bash wps_es.sh 
-
-		#Search axel, wget o curl in your OS
-           echo "Por favor espere, buscando dependencias para scripts ..."
-            count_pkg=$(whereis axels | grep -c "bin/axel")
-
-            #echo "instaldo o no: $count_pkg"
-
-            if [ $count_pkg -eq 1 ]; then
-                
-                echo "Ok, dependencias instaladas .."
-                
-            else
-                echo "Ocurrio un error al tratar de instalar dependencias, por favor comuniquese con el Ing. Armando Ibarra .."
-            fi
-
-            #http://stackoverflow.com/questions/687948/timeout-a-command-in-bash-without-unnecessary-delay
-            echo "Proceso terminado, se reiniciara su OS en 3 segundos..."
-
-
-
-    	exit 0
-    	#report_bug
-
-    	#Wps instlled on /opt/kingsoft/wps-office/
-
     	#Try run 
 		if [ -d /opt/kingsoft/ ];then
+
+			show_msn_w "OK"
+
 			/opt/kingsoft/wps-office/office6/wps
 
 			ps auxw | grep wps | grep -v grep > /dev/null
@@ -1118,62 +1043,76 @@ install()
 
 		fi
 
-		echo 'Updating repository information...'
-    	echo 'Requires root privileges:'
-    	sudo apt-get update
+		#Install dependences for generate spanish with libqt4-dev
+		#optionals
+		install_with_package_manager msttcorefonts 
+		install_with_package_manager gsfonts-x11
 
+		show_msn_w "Try to install qt4-dev-tools, please be patient as this Could take several long"
+
+		#requiered if not exist show message to user
+		install_with_package_manager qt4-dev-tools 
+
+        if test $? -eq 0; then
+        	show_msn_w "Success installed dependence qt4-dev-tools "				    					
+        else
+        	show_msn_w "$LINENO --  ERROR i can't install qt4-dev-tools, which cause i can't generate zip for spanish language"
+        	exit 0
+    	fi
+
+		#sudo apt-get -y install libc6:i386 libgcc1:i386 gcc-4.6-base:i386 libstdc++6:i386 libx11-6:i386 libglib2.0-0:i386 libfreetype6:i386 libSM6:i386 libXrender1:i386 libfontconfig1:i386 libXext6:i386 libcups2:i386 p11-kit:i386 libcap-ng0:i386 gnome-keyring:i386 libglu1-mesa:i386
+
+		#check libs 
+		# which rcc
+		# which lrelease-qt4
+
+		# # Check that target file wps.deb exists
+		# if [ ! -f $PATH_DEB ]; then
+	 #        echo -e "$WHITE Please wait, try download wps... $RESET"
+	 #        sleep 1
+	 #        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
+		# 	if wget $WPS_DEB -O "${DEB}";then 
+		# 		#seach file
+		# 		# if [ test $? -eq 0 ];then
+		# 	 #  		echo "No command-line arguments."
+		# 		# else
+		# 	 #  		echo "First command-line argument is $1."
+		# 		# fi
+
+		# 		if [ -f $DEB ]; then
+		# 			echo -e "$GREEN Download complete $RESET"
+		# 		else 
+		# 			exit 0
+		# 		fi
+		# 	fi
+		# fi
+
+    	#du -h kingsoft-office_9.1.0.4280~a12p4_i386.deb like 141M	kingsoft-office_9.1.0.4280~a12p4_i386.deb
+
+  		# 32-bit systems type in the following commands
+
+		# wget -O wps.deb $WPS_DEB
+		# sudo dpkg -i wps.deb
+		# rm wps.deb
+
+		# sudo apt-get install gdebi && sudo gdebi kingsoft-office_*.deb
+
+    	#unistall http://www.kingsoftstore.com/support-for-android-office/3013-install-or-uninstall-kingsoft-office-for-android.html
+    	#
+    	#sudo apt-get purge wps-office
+    	#sudo apt-get purge wps-office   # for a8 or earlier versions.
+		#sudo apt-get purge kingsoft-office  # for a9 or later versions.
+
+    	#report_bug
+
+    	#Wps instlled on /opt/kingsoft/wps-office/
     	#search on apt
     	#Add repository key
 		#sudo apt-key adv --keyserver $URL_SERVER --recv-keys $KEY
     	#sudo add-apt-repository "deb http://ubuntu $(lsb_release -sc) main"
     	#sudo apt-get update && sudo apt-get install kinsoft
 
-		#sudo apt-get install ia32-libs 
-
-		exit
-    	#sudo apt-get install qt4-dev-tools
-    	#libqt4-dev
-    	su -c "Updating "
-    	su -c "apt-get install qt4-dev-tools msttcorefonts gsfonts-x11"
-    	sudo apt-get -y install libc6:i386 libgcc1:i386 gcc-4.6-base:i386 libstdc++6:i386 libx11-6:i386 libglib2.0-0:i386 libfreetype6:i386 libSM6:i386 libXrender1:i386 libfontconfig1:i386 libXext6:i386 libcups2:i386 p11-kit:i386 libcap-ng0:i386 gnome-keyring:i386 libglu1-mesa:i386
-    	sudo dpkg -i kingsoft-office_9.1.0.4244~a12p3_i386.deb
-
-  #   	if apt-get -qq install $pkg; then
-		#     echo "Successfully installed $pkg"
-		# else
-		#     echo "Error installing $pkg"
-		# fi
-
-		#check libs 
-		which rcc
-		which lrelease-qt4
-
-		# Check that target file wps.deb exists
-		if [ ! -f $PATH_DEB ]; then
-	        echo -e "$WHITE Please wait, try download wps... $RESET"
-	        sleep 1
-	        #http://kdl.cc.ksosoft.com/wps-community/kingsoft-office_9.1.0.4280~a12p4_i386.deb
-			if wget $WPS_DEB -O "${DEB}";then 
-				#seach file
-				# if [ test $? -eq 0 ];then
-			 #  		echo "No command-line arguments."
-				# else
-			 #  		echo "First command-line argument is $1."
-				# fi
-
-				if [ -f $DEB ]; then
-					echo -e "$GREEN Download complete $RESET"
-				else 
-					exit 0
-				fi
-			fi
-		fi
-
-		echo -e "$WHITE Plase wait, try to install Package $RESET"
-		
-
-		install_with_deb $PATH_DEB
-		install_with_package_manager 
+    	exit 0
 
 
   	;;
@@ -1207,7 +1146,6 @@ unistall()
 check_os
 #then ckeck dependences for this distro
 check_dependences
-
 #install_lang_es
 
 #Testing all dependences 
